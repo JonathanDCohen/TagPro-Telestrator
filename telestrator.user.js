@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            TagPro Telestrator
-// @version         1.0.0
+// @version         1.0.1
 // @description     Use a telestrator while spectating TagPro!
 // @include         http://tagpro-*.koalabeast.com:*
 // @include         http://tangent.jukejuice.com:*
@@ -34,7 +34,6 @@ tagpro.ready(function() {
 		};
 	}
 
-
 // ---------- POINT CLASS ---------- \\
 
 	//represents a point in the game's coordinates.
@@ -67,32 +66,32 @@ tagpro.ready(function() {
 			points.push(new Point(point));
 		}
 
-		this.draw = function(context) {
-			if(points.length < 3) { return false; }
-
-			var canvasPoints = points.map(function(point) {
-				return point.toCanvas();
-			})
-
-			context.save();
-
+		function drawSmooth(context, points) {
 			context.beginPath();
 
 			context.strokeStyle = 'rgba(245, 221, 0, 0.6)';
 			context.lineWidth = 5;
 
 			//http://stackoverflow.com/questions/7054272/how-to-draw-smooth-curve-through-n-points-using-javascript-html5-canvas
-			context.moveTo(canvasPoints[0].x, canvasPoints[0].y);
+			context.moveTo(points[0].x, points[0].y);
 			var i = 1;
-			for(var control = {x: 0, y: 0}; i < canvasPoints.length - 2; i++) {
-				control.x = (canvasPoints[i].x + canvasPoints[i + 1].x) / 2;
-				control.y = (canvasPoints[i].y + canvasPoints[i + 1].y) / 2;
-				context.quadraticCurveTo(canvasPoints[i].x, canvasPoints[i].y, control.x, control.y);
+			for(var control = {x: 0, y: 0}; i < points.length - 2; i++) {
+				control.x = (points[i].x + points[i + 1].x) / 2;
+				control.y = (points[i].y + points[i + 1].y) / 2;
+				context.quadraticCurveTo(points[i].x, points[i].y, control.x, control.y);
 			}
-			context.quadraticCurveTo(canvasPoints[i].x, canvasPoints[i].y, canvasPoints[i+1].x, canvasPoints[i+1].y);
+			context.quadraticCurveTo(points[i].x, points[i].y, points[i+1].x, points[i+1].y);
 
 			context.stroke();
+		}
 
+		this.draw = function(context) {
+			if(points.length < 3) { return false; }
+
+			context.save();
+
+			drawSmooth(context, points.map(function(point) { return point.toCanvas(); }));
+			
 			context.restore();
 		}
 	}
