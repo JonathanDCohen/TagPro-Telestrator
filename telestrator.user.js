@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            TagPro Telestrator
-// @version         1.0.1
+// @version         0.1.2
 // @description     Use a telestrator while spectating TagPro!
 // @include         http://tagpro-*.koalabeast.com:*
 // @include         http://tangent.jukejuice.com:*
@@ -25,12 +25,21 @@ tagpro.ready(function() {
 
 	//converts canvas coordinates to the corresponding in-game coordinates
 	function canvasToTagpro(click) {
+		//canvas coordinates of mouse click
 		var canvasCoords = canvasMousePosition(click);
+
+		//canvas coordinates of camera target
 		var srcCoords = {x: viewPort.width / 2 - 20 / tagpro.zoom, y: viewPort.height / 2 - 20 / tagpro.zoom};
-		var diff = {x: canvasCoords.x - srcCoords.x, y: canvasCoords.y - srcCoords.y};
+
+		//vector from camera target to mouse click in canvas pixels
+		var canvasDiff = {x: canvasCoords.x - srcCoords.x, y: canvasCoords.y - srcCoords.y};
+
+		//vector from camera target to mouse click in in-game pixels
+		var tpDiff = {x: canvasDiff.x * tagpro.zoom, y: canvasDiff.y * tagpro.zoom}; 
+
 		return {
-			x: tagpro.viewPort.source.x + diff.x * tagpro.zoom,
-			y: tagpro.viewPort.source.y + diff.y * tagpro.zoom
+			x: tagpro.viewPort.source.x + tpDiff.x, 
+			y: tagpro.viewPort.source.y + tpDiff.y
 		};
 	}
 
@@ -40,21 +49,29 @@ tagpro.ready(function() {
 	//constructor takes a pair of canvas coordinates, i.e. from a click event.
 	var Point = function(click) {
 		var coords = canvasToTagpro(click);
-		
-		var pub = {x: coords.x, y: coords.y};
-		//converts the game coordinates to coordinates on the canvas
-		pub.toCanvas = function() {
+	
+		this.x = coords.x;
+		this.y = coords.y;
+
+		//the inverse operation of canvasToTagpro
+		this.toCanvas = function() {
+			//in-game coordinates of camera target
 			var tpSrcCoords = {x: tagpro.viewPort.source.x, y: tagpro.viewPort.source.y};
+
+			//canvas coordinates of camera target
 			var canvasSrcCoords = {x: viewPort.width / 2 - 20 / tagpro.zoom, y: viewPort.height / 2 - 20 / tagpro.zoom};
+
+			//vector from camera target to click in in-game pixels
 			var tpDiff = {x: this.x - tpSrcCoords.x, y: this.y - tpSrcCoords.y};
+
+			//vector from camera target to click in canvas pixels
 			var canvasDiff = {x: tpDiff.x / tagpro.zoom, y: tpDiff.y / tagpro.zoom};
+
 			return {
 				x: canvasSrcCoords.x + canvasDiff.x,
 				y: canvasSrcCoords.y + canvasDiff.y
 			};
 		}
-
-		return pub;
 	}
 
 // ---------- CURVE CLASS ---------- \\
@@ -89,12 +106,72 @@ tagpro.ready(function() {
 			if(points.length < 3) { return false; }
 
 			context.save();
-
 			drawSmooth(context, points.map(function(point) { return point.toCanvas(); }));
-			
 			context.restore();
 		}
 	}
+
+// ---------- ARROW CLASS ---------- \\
+var Arrow() = function(_start) {
+	var start = canvasToTagpro(_start), end = start;
+	var angle = 0;
+
+	//if the arrow is horizontal and points to the center of a tile
+	//the points of the head should be about the corners of that tile
+	var headAngle = .4;  // ~22.5 degrees in radians
+	var headLength = 45; // ~sqrt(40^2 + 20^2) 
+
+	this.End = function(_end) {
+		end = canvasToTagpro(_end);
+		angle = Math.atan2(end.y - start.y, end.x - start.x);
+	}
+
+	//takes a context and canvas coordinates
+	function drawLine(context, start, end) {
+		context.beginPath();
+
+		context.strokeStyle = 'rgba(200, 0, 250, 0.6)';
+		context.lineWidth = 5;
+		context.lineCap = 'round';		
+
+		context.moveTo(start.x, start.y);
+		context.lineTo(end.x, end.y);
+
+		context.stroke();
+	}
+
+	function drawHead(context) {
+		context.beginPath();
+
+		var arrowPoint = end.toCanvas();
+		
+		//black magic, a.k.a. high school geometry
+		//see repo for explanation
+		var phiRight = Math.PI / 2 - angle - headAngle;
+		var rightEnd = {
+			x: arrowPoint.x - headLength * Math.cos(phiRight),
+			y: arrowPoint.y - headLength * Math.sin(phiRight)
+		};
+
+		var phiLeft = headAngle - angle;
+		var leftEnd = {
+			x: arrowPoint.x - headLength * Math.cos(phiLeft),
+			y: arrowPoint.y - headLength * Math.sin(phiLeft)
+		};
+
+		drawLine(context, arrowPoint, rightEnd);
+		drawLine(context, arrowPoint, leftEnd);
+	}
+
+	this.draw = function(context) {
+		context.save();
+		drawLine(context, start.toCanvas(), end.toCanvas());
+		drawHead(context);
+		context.restore();
+	}
+
+
+}
 
 // ---------- HIGH LEVEL LOGIC ----------\\
 
