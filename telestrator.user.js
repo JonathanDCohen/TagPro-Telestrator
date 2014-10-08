@@ -155,8 +155,8 @@ var Arrow() = function(_start) {
 
 		var phiLeft = headAngle - angle;
 		var leftEnd = {
-			x: arrowPoint.x - headLength * Math.cos(phiLeft),
-			y: arrowPoint.y - headLength * Math.sin(phiLeft)
+			x: arrowPoint.x - headLength * Math.cos(phiLeft) / tagpro.zoom,
+			y: arrowPoint.y - headLength * Math.sin(phiLeft) / tagpro.zoom
 		};
 
 		drawLine(context, arrowPoint, rightEnd);
@@ -169,8 +169,6 @@ var Arrow() = function(_start) {
 		drawHead(context);
 		context.restore();
 	}
-
-
 }
 
 // ---------- HIGH LEVEL LOGIC ----------\\
