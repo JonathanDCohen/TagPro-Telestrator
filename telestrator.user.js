@@ -160,7 +160,10 @@ var Arrow = function(_start) {
 
 // ---------- HIGH LEVEL LOGIC ----------\\
 
-	if (noClick) { tagpro.kick.clickBall = function() {}; }
+	tpkick = tagpro.kick.clickBall;
+	tagpro.kick.clickBall = function(event) { 
+		if (!noClick) { tpkick (event); } 
+	}
 
 	var curves = [], arrows = [];
 	var drawCurve = false, drawArrow = false, shift = false;
