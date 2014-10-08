@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            TagPro Telestrator
-// @version         0.1.2
+// @version         1.0.0
 // @description     Use a telestrator while spectating TagPro!
 // @include         http://tagpro-*.koalabeast.com:*
 // @include         http://tangent.jukejuice.com:*
@@ -10,9 +10,6 @@
 
 tagpro.ready(function() {
 	if (tagpro.spectator !== "watching") { return false; }
-
-	var curves = [];
-	var drawing = false;
 
 // ---------- HELPER METHODS ---------- \\
 	function canvasMousePosition(click) {
@@ -109,21 +106,31 @@ tagpro.ready(function() {
 			drawSmooth(context, points.map(function(point) { return point.toCanvas(); }));
 			context.restore();
 		}
-	}
+	};
 
 // ---------- ARROW CLASS ---------- \\
-var Arrow() = function(_start) {
-	var start = canvasToTagpro(_start), end = start;
+var Arrow = function(_start) {
+	var headAngle = .4;  // ~22.5 degrees in radians
+	var wingLength = 45; //length in TagPro pixels
+
+
+	var start = new Point(_start), end = new Point(_start), rightWing = new Point(_start), leftWing = new Point(_start);
 	var angle = 0;
 
-	//if the arrow is horizontal and points to the center of a tile
-	//the points of the head should be about the corners of that tile
-	var headAngle = .4;  // ~22.5 degrees in radians
-	var headLength = 45; // ~sqrt(40^2 + 20^2) 
+	function rotateHead() {
+		var phiRight = angle + headAngle;
+		rightWing.x = end.x - wingLength * Math.cos(phiRight);
+		rightWing.y = end.y - wingLength * Math.sin(phiRight);
 
-	this.End = function(_end) {
-		end = canvasToTagpro(_end);
+		var phiLeft = angle - headAngle;
+		leftWing.x = end.x - wingLength * Math.cos(phiLeft);
+		leftWing.y = end.y - wingLength * Math.sin(phiLeft);
+	}
+
+	this.moveEnd = function(_end) {
+		end = new Point(_end);
 		angle = Math.atan2(end.y - start.y, end.x - start.x);
+		rotateHead();
 	}
 
 	//takes a context and canvas coordinates
@@ -140,67 +147,61 @@ var Arrow() = function(_start) {
 		context.stroke();
 	}
 
-	function drawHead(context) {
-		context.beginPath();
-
-		var arrowPoint = end.toCanvas();
-		
-		//black magic, a.k.a. high school geometry
-		//see repo for explanation
-		var phiRight = Math.PI / 2 - angle - headAngle;
-		var rightEnd = {
-			x: arrowPoint.x - headLength * Math.cos(phiRight),
-			y: arrowPoint.y - headLength * Math.sin(phiRight)
-		};
-
-		var phiLeft = headAngle - angle;
-		var leftEnd = {
-			x: arrowPoint.x - headLength * Math.cos(phiLeft) / tagpro.zoom,
-			y: arrowPoint.y - headLength * Math.sin(phiLeft) / tagpro.zoom
-		};
-
-		drawLine(context, arrowPoint, rightEnd);
-		drawLine(context, arrowPoint, leftEnd);
-	}
-
 	this.draw = function(context) {
 		context.save();
-		drawLine(context, start.toCanvas(), end.toCanvas());
-		drawHead(context);
+		drawLine(context, end.toCanvas(), start.toCanvas());
+		drawLine(context, end.toCanvas(), rightWing.toCanvas());
+		drawLine(context, end.toCanvas(), leftWing.toCanvas());
 		context.restore();
 	}
-}
+};
 
 // ---------- HIGH LEVEL LOGIC ----------\\
+
+	var curves = [], arrows = [];
+	var drawCurve = false, drawArrow = false, shift = false;
 
 	var tpUiDraw = tagpro.ui.draw;
 	tagpro.ui.draw = function(context) {
 		curves.forEach(function(element) {
 			element.draw(context);
 		});
+
+		arrows.forEach(function(element) {
+			element.draw(context);
+		});
+
 		tpUiDraw(context);
 	};
 
+	$(document).on("keydown keyup", function (event) { shift = event.shiftKey; });
+
 	$("canvas#viewPort").mousedown(function(click) {
-		console.log("telestrator mousedown");
-		drawing = true;
-		curves.push(new Curve(click));
+		if (shift) {
+			drawArrow = true;
+			arrows.push(new Arrow(click));
+		} else {
+			drawCurve = true;
+			curves.push(new Curve(click));
+		}
 	});
 
 	$("canvas#viewPort").mousemove(function(event) {
-		if (!drawing) { return; }
-		console.log("telestrator mousemove");
-		curves[curves.length - 1].addPoint(event);
+		if (drawArrow) {
+			arrows[arrows.length -1].moveEnd(event);
+		} else if (drawCurve) {
+			curves[curves.length - 1].addPoint(event);
+		}
 	});
 
 	$("canvas#viewPort").mouseup(function(event) {
-		console.log("telestrator mouseup");
-		drawing = false;
+		drawCurve = false;
+		drawArrow = false;
 	});
 
 	$("canvas#viewPort").dblclick(function(event) {
-		console.log("telestrator dblclick");
 		curves = [];
+		arrows = [];
 	});
 
 });
