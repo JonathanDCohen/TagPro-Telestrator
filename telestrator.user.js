@@ -10,6 +10,9 @@
 
 tagpro.ready(function() {
 
+// ---------- KICK TOGGLE ---------- \\
+var noClick = true;
+
 // ---------- HELPER METHODS ---------- \\
 	function canvasMousePosition(click) {
 		var boundBox = viewPort.getBoundingClientRect();
@@ -156,6 +159,8 @@ var Arrow = function(_start) {
 };
 
 // ---------- HIGH LEVEL LOGIC ----------\\
+
+	if (noClick) { tagpro.kick.clickBall = function() {}; }
 
 	var curves = [], arrows = [];
 	var drawCurve = false, drawArrow = false, shift = false;
