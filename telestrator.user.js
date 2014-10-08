@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            TagPro Telestrator
-// @version         1.0.0
+// @version         1.0.1
 // @description     Use a telestrator while spectating TagPro!
 // @include         http://tagpro-*.koalabeast.com:*
 // @include         http://tangent.jukejuice.com:*
@@ -9,14 +9,13 @@
 // ==/UserScript==
 
 tagpro.ready(function() {
-	if (tagpro.spectator !== "watching") { return false; }
 
 // ---------- HELPER METHODS ---------- \\
 	function canvasMousePosition(click) {
 		var boundBox = viewPort.getBoundingClientRect();
 		return {
-			x: click.clientX - boundBox.left,
-			y: click.clientY - boundBox.top
+			x: click.clientX  - 9 - boundBox.left,
+			y: click.clientY - 12 - boundBox.top
 		};
 	}
 
@@ -177,6 +176,7 @@ var Arrow = function(_start) {
 	$(document).on("keydown keyup", function (event) { shift = event.shiftKey; });
 
 	$("canvas#viewPort").mousedown(function(click) {
+		if (tagpro.spectator !== "watching") { return false; }
 		if (shift) {
 			drawArrow = true;
 			arrows.push(new Arrow(click));
