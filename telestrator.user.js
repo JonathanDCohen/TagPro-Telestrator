@@ -11,9 +11,11 @@
 tagpro.ready(function() {
 
 // ---------- KICK TOGGLE ---------- \\
+
 var noClick = true;
 
 // ---------- HELPER METHODS ---------- \\
+
 	function canvasMousePosition(click) {
 		var boundBox = viewPort.getBoundingClientRect();
 		return {
@@ -111,6 +113,7 @@ var noClick = true;
 	};
 
 // ---------- ARROW CLASS ---------- \\
+
 var Arrow = function(_start) {
 	var headAngle = .4;  // ~22.5 degrees in radians
 	var wingLength = 45; //length in TagPro pixels
@@ -213,7 +216,5 @@ var Arrow = function(_start) {
 
 		//clear the selection on the donate button which sometimes keeps you from redrawing.
 		window.getSelection().removeAllRanges();
-
 	});
-
 });
