@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            TagPro Telestrator
-// @version         1.0.1
+// @version         1.0.2
 // @description     Use a telestrator while spectating TagPro!
 // @include         http://tagpro-*.koalabeast.com:*
 // @include         http://tangent.jukejuice.com:*
@@ -210,6 +210,10 @@ var Arrow = function(_start) {
 	$("canvas#viewPort").dblclick(function(event) {
 		curves = [];
 		arrows = [];
+
+		//clear the selection on the donate button which sometimes keeps you from redrawing.
+		window.getSelection().removeAllRanges();
+
 	});
 
 });
