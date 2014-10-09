@@ -168,17 +168,22 @@ var Arrow = function(_start) {
 		if (!noClick) { tpkick (event); } 
 	}
 
-	var curves = [], arrows = [];
+	var curves = [], arrows = [], shapes = [curves, arrows];
 	var drawCurve = false, drawArrow = false, shift = false;
 
 	var tpUiDraw = tagpro.ui.draw;
 	tagpro.ui.draw = function(context) {
-		curves.forEach(function(element) {
-			element.draw(context);
-		});
+		// curves.forEach(function(element) {
+		// 	element.draw(context);
+		// });
 
-		arrows.forEach(function(element) {
-			element.draw(context);
+		// arrows.forEach(function(element) {
+		// 	element.draw(context);
+		// });
+		shapes.forEach(function(arr) {
+			arr.forEach(function(shape) {
+				shape.draw(context);
+			});
 		});
 
 		tpUiDraw(context);
