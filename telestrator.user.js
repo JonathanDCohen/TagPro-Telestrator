@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            TagPro Telestrator
-// @version         1.0.2
+// @version         1.1.0
 // @description     Use a telestrator while spectating TagPro!
 // @include         http://tagpro-*.koalabeast.com:*
 // @include         http://tangent.jukejuice.com:*
@@ -19,8 +19,8 @@ var noClick = true;
 	function canvasMousePosition(click) {
 		var boundBox = viewPort.getBoundingClientRect();
 		return {
-			x: click.clientX  - 9 - boundBox.left,
-			y: click.clientY - 12 - boundBox.top
+			x: click.clientX  - 6 - boundBox.left,
+			y: click.clientY - 9 - boundBox.top
 		};
 	}
 
@@ -42,7 +42,7 @@ var noClick = true;
 			x: tagpro.viewPort.source.x + tpDiff.x, 
 			y: tagpro.viewPort.source.y + tpDiff.y
 		};
-	}
+	};
 
 // ---------- POINT CLASS ---------- \\
 
@@ -73,7 +73,19 @@ var noClick = true;
 				y: canvasSrcCoords.y + canvasDiff.y
 			};
 		}
-	}
+
+		this.minus = function(other) {
+			var out = new Point({});
+			out.x = this.x - other.x;
+			out.y = this.y - other.y;
+			return out;
+		}
+
+		this.distance = function(other) {
+			var diff = this.minus(other);
+			return Math.sqrt(diff.x * diff.x + diff.y * diff.y);
+		}
+	};
 
 // ---------- CURVE CLASS ---------- \\
  
@@ -161,6 +173,34 @@ var Arrow = function(_start) {
 	}
 };
 
+// ---------- CIRCLE CLASS ---------- \\
+
+var Circle = function(_center) {
+	var center = new Point(_center), radius = 0;
+
+	this.changeSize = function(event) {
+		radius = center.distance(new Point(event));
+	};
+
+	function drawCircle(context) {
+		context.beginPath();
+
+		context.strokeStyle = 'rgba(245, 221, 0, 0.6)';
+		context.lineWidth = 5;
+
+		var canvasCenter = center.toCanvas();
+		context.arc(canvasCenter.x, canvasCenter.y, radius / tagpro.zoom, 0, 2 * Math.PI);
+
+		context.stroke();
+	} 
+
+	this.draw = function(context) {
+		context.save();
+		drawCircle(context);
+		context.restore();
+	}
+}
+
 // ---------- HIGH LEVEL LOGIC ----------\\
 
 	tpkick = tagpro.kick.clickBall;
@@ -168,8 +208,8 @@ var Arrow = function(_start) {
 		if (!noClick) { tpkick (event); } 
 	}
 
-	var curves = [], arrows = [];
-	var drawCurve = false, drawArrow = false, shift = false;
+	var curves = [], arrows = [], circles = [];
+	var drawCurve = false, drawArrow = false, drawCircle = false, shift = false, alt = false;;
 
 	var tpUiDraw = tagpro.ui.draw;
 	tagpro.ui.draw = function(context) {
@@ -181,16 +221,26 @@ var Arrow = function(_start) {
 			element.draw(context);
 		});
 
+		circles.forEach(function(element) {
+			element.draw(context);
+		});
+
 		tpUiDraw(context);
 	};
 
-	$(document).on("keydown keyup", function (event) { shift = event.shiftKey; });
+	$(document).on("keydown keyup", function (event) { 
+		shift = event.shiftKey;
+		alt   = event.altKey; 
+	});
 
 	$("canvas#viewPort").mousedown(function(click) {
 		if (tagpro.spectator !== "watching") { return false; }
 		if (shift) {
 			drawArrow = true;
 			arrows.push(new Arrow(click));
+		} else if(alt) {
+			drawCircle = true;
+			circles.push(new Circle(click));
 		} else {
 			drawCurve = true;
 			curves.push(new Curve(click));
@@ -202,19 +252,23 @@ var Arrow = function(_start) {
 			arrows[arrows.length -1].moveEnd(event);
 		} else if (drawCurve) {
 			curves[curves.length - 1].addPoint(event);
+		} else if (drawCircle) {
+			circles[circles.length - 1].changeSize(event);
 		}
 	});
 
 	$("canvas#viewPort").mouseup(function(event) {
 		drawCurve = false;
 		drawArrow = false;
+		drawCircle = false;
 	});
 
 	$("canvas#viewPort").dblclick(function(event) {
-		curves = [];
-		arrows = [];
-
 		//clear the selection on the donate button which sometimes keeps you from redrawing.
 		window.getSelection().removeAllRanges();
+
+		curves  = [];
+		arrows  = [];
+		circles = [];
 	});
 });
