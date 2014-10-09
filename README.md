@@ -10,3 +10,6 @@ Controls:
 * Shift-Click-Drag: draw an arrow
 * Alt-Click-Drag: draw a circle
 * Double Click: erase drawings
+
+By default, this userscript disables reporting a player by clicking their ball so that it doesn't get in the way of your drawing.  
+If you want to allow reporting by clicking, set the "kickClick" variable at the top of the script to true.
