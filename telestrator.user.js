@@ -19,8 +19,8 @@ var noClick = true;
 	function canvasMousePosition(click) {
 		var boundBox = viewPort.getBoundingClientRect();
 		return {
-			x: click.clientX  - 9 - boundBox.left,
-			y: click.clientY - 12 - boundBox.top
+			x: click.clientX  - 6 - boundBox.left,
+			y: click.clientY - 9 - boundBox.top
 		};
 	}
 
@@ -266,7 +266,7 @@ var Circle = function(_center) {
 	$("canvas#viewPort").dblclick(function(event) {
 		//clear the selection on the donate button which sometimes keeps you from redrawing.
 		window.getSelection().removeAllRanges();
-		
+
 		curves  = [];
 		arrows  = [];
 		circles = [];
