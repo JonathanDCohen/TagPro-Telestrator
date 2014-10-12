@@ -66,6 +66,7 @@ tagpro.ready(function() {
 
 	//represents a point in the game's coordinates.
 	//constructor takes a pair of canvas coordinates, i.e. from a click event.
+	//if tpCoords is true, it instead takes a pair of tagpro coordinates
 	var Point = function(click, tpCoords) {
 		if (tpCoords) {
 			var coords = click;
@@ -121,7 +122,7 @@ tagpro.ready(function() {
 	var Curve = function(start) {
 		var points = [new Point(start)];
 
-		this.addPoint = function(point, tpCoords) { 
+		this.update = function(point, tpCoords) { 
 			points.push(new Point(point, tpCoords));
 		}
 
@@ -177,7 +178,7 @@ tagpro.ready(function() {
 		var pointCount = 1;
 
 		var movement = setInterval(function() {
-			path.addPoint(current, true);
+			path.update(current, true);
 			current = (new Point(tagpro.players[playerId], true)).plus({x: 20, y: 20});
 			if (pointCount < traceLength) {
 				++pointCount;
@@ -216,7 +217,7 @@ tagpro.ready(function() {
 			leftWing.y = end.y - wingLength * Math.sin(phiLeft);
 		}
 
-		this.moveEnd = function(_end) {
+		this.update = function(_end) {
 			end = new Point(_end);
 			angle = Math.atan2(end.y - start.y, end.x - start.x);
 			rotateHead();
@@ -250,7 +251,7 @@ tagpro.ready(function() {
 	var Circle = function(_center) {
 		var center = new Point(_center), radius = 0;
 
-		this.changeSize = function(event) {
+		this.update = function(event) {
 			radius = center.distance(new Point(event));
 		};
 
@@ -280,26 +281,18 @@ tagpro.ready(function() {
 		if (kickClick || !tagpro.spectator) { tpkick(event); } 
 	}
 
-	var curves = [], arrows = [], circles = [], traces = [];
-	var drawCurve = false, drawArrow = false, drawCircle = false, shift = false, alt = false;
+	var traces = [], drawings = [];
+	var drawing = false, shift = false, alt = false;
 
 	var tpUiDraw = tagpro.ui.draw;
 	tagpro.ui.draw = function(context) {
-		curves.forEach(function(element) {
-			element.draw(context);
-		});
-
-		arrows.forEach(function(element) {
-			element.draw(context);
-		});
-
-		circles.forEach(function(element) {
-			element.draw(context);
-		});
-
 		traces.forEach(function(element) {
 			element.draw(context);
 		})
+		
+		drawings.forEach(function(element) {
+			element.draw(context);
+		});
 
 		tpUiDraw(context);
 	};
@@ -311,46 +304,39 @@ tagpro.ready(function() {
 
 	$("canvas#viewPort").mousedown(function(click) {
 		if (tagpro.spectator !== "watching") { return false; }
+		drawing = true;
 		if (shift && alt) {
 			var found = findPlayer(click);
 			if (found) {
 				traces.push(new Trace(found));
 			}
 		} else if (shift) {
-			drawArrow = true;
-			arrows.push(new Arrow(click));
+			// drawArrow = true;
+			drawings.push(new Arrow(click));
 		} else if(alt) {
-			drawCircle = true;
-			circles.push(new Circle(click));
+			// drawCircle = true;
+			drawings.push(new Circle(click));
 		} else {
-			drawCurve = true;
-			curves.push(new Curve(click));
+			// drawCurve = true;
+			drawings.push(new Curve(click));
 		}
 	});
 
 	$("canvas#viewPort").mousemove(function(event) {
-		if (drawArrow) {
-			arrows[arrows.length -1].moveEnd(event);
-		} else if (drawCurve) {
-			curves[curves.length - 1].addPoint(event);
-		} else if (drawCircle) {
-			circles[circles.length - 1].changeSize(event);
+		if (drawing) {
+			drawings[drawings.length - 1].update(event);
 		}
 	});
 
 	$("canvas#viewPort").mouseup(function(event) {
-		drawCurve = false;
-		drawArrow = false;
-		drawCircle = false;
+		drawing = false;
 	});
 
 	$("canvas#viewPort").dblclick(function(event) {
 		//clear the selection on the donate button which sometimes keeps you from redrawing.
 		window.getSelection().removeAllRanges();
 
-		curves  = [];
-		arrows  = [];
-		circles = [];
+		drawings = [];
 		traces.forEach(function(element) {
 			element.stop();
 		})
