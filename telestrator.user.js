@@ -177,7 +177,7 @@ tagpro.ready(function() {
 		var active = true;
 		var pointCount = 1;
 
-		var movement = setInterval(function() {
+		function update() {
 			path.update(current, true);
 			current = (new Point(tagpro.players[playerId], true)).plus({x: 20, y: 20});
 			if (pointCount < traceLength) {
@@ -185,14 +185,14 @@ tagpro.ready(function() {
 			} else {
 				path.trim();
 			}
-		}, 1000/60);
+		}
 
 		this.draw = function(context) {
+			update();
 			if (active) { path.draw(context, current) };
 		}
 
 		this.stop = function() {
-			clearInterval(movement);
 			active = false;
 		}
 	}
