@@ -10,119 +10,191 @@
 
 tagpro.ready(function() {
 
-// ---------- KICK TOGGLE ---------- \\
+// ---------- OPTIONS ---------- \\
 
 	var kickClick = false;
+	var traceLength = 300;
 
 // ---------- HELPER METHODS ---------- \\
 
-		function canvasMousePosition(click) {
-			var boundBox = viewPort.getBoundingClientRect();
-			return {
-				x: click.clientX  - 6 - boundBox.left,
-				y: click.clientY - 9 - boundBox.top
-			};
-		}
-
-		//converts canvas coordinates to the corresponding in-game coordinates
-		function canvasToTagpro(click) {
-			//canvas coordinates of mouse click
-			var canvasCoords = canvasMousePosition(click);
-
-			//canvas coordinates of camera target
-			var srcCoords = {x: viewPort.width / 2 - 20 / tagpro.zoom, y: viewPort.height / 2 - 20 / tagpro.zoom};
-
-			//vector from camera target to mouse click in canvas pixels
-			var canvasDiff = {x: canvasCoords.x - srcCoords.x, y: canvasCoords.y - srcCoords.y};
-
-			//vector from camera target to mouse click in in-game pixels
-			var tpDiff = {x: canvasDiff.x * tagpro.zoom, y: canvasDiff.y * tagpro.zoom}; 
-
-			return {
-				x: tagpro.viewPort.source.x + tpDiff.x, 
-				y: tagpro.viewPort.source.y + tpDiff.y
-			};
+	function canvasMousePosition(click) {
+		var boundBox = viewPort.getBoundingClientRect();
+		return {
+			x: click.clientX  - 6 - boundBox.left,
+			y: click.clientY - 9 - boundBox.top
 		};
+	}
+
+	//converts canvas coordinates to the corresponding in-game coordinates
+	function canvasToTagpro(click) {
+		//canvas coordinates of mouse click
+		var canvasCoords = canvasMousePosition(click);
+
+		//canvas coordinates of camera target
+		var srcCoords = {x: viewPort.width / 2 - 20 / tagpro.zoom, y: viewPort.height / 2 - 20 / tagpro.zoom};
+
+		//vector from camera target to mouse click in canvas pixels
+		var canvasDiff = {x: canvasCoords.x - srcCoords.x, y: canvasCoords.y - srcCoords.y};
+
+		//vector from camera target to mouse click in in-game pixels
+		var tpDiff = {x: canvasDiff.x * tagpro.zoom, y: canvasDiff.y * tagpro.zoom}; 
+
+		return {
+			x: tagpro.viewPort.source.x + tpDiff.x, 
+			y: tagpro.viewPort.source.y + tpDiff.y
+		};
+	};
+
+	function findPlayer(click) {
+		var coords = canvasToTagpro(click);
+
+		var found = false;
+		for (var idx in tagpro.players) {
+			var player = tagpro.players[idx];
+			if ((coords.x >= player.x) && (coords.x <= player.x + 40 / tagpro.zoom)
+			 && (coords.y >= player.y) && (coords.y <= player.y + 40 / tagpro.zoom)) 
+			{
+				found = idx;
+				console.log("found player " + found);
+				break;
+			}
+		}
+		return found;
+	}
 
 // ---------- POINT CLASS ---------- \\
 
-		//represents a point in the game's coordinates.
-		//constructor takes a pair of canvas coordinates, i.e. from a click event.
-		var Point = function(click) {
+	//represents a point in the game's coordinates.
+	//constructor takes a pair of canvas coordinates, i.e. from a click event.
+	var Point = function(click, tpCoords) {
+		if (tpCoords) {
+			var coords = click;
+		} else {
 			var coords = canvasToTagpro(click);
-		
-			this.x = coords.x;
-			this.y = coords.y;
+		}
+	
+		this.x = coords.x;
+		this.y = coords.y;
 
-			//the inverse operation of canvasToTagpro
-			this.toCanvas = function() {
-				//in-game coordinates of camera target
-				var tpSrcCoords = {x: tagpro.viewPort.source.x, y: tagpro.viewPort.source.y};
+		//the inverse operation of canvasToTagpro
+		this.toCanvas = function() {
+			//in-game coordinates of camera target
+			var tpSrcCoords = {x: tagpro.viewPort.source.x, y: tagpro.viewPort.source.y};
 
-				//canvas coordinates of camera target
-				var canvasSrcCoords = {x: viewPort.width / 2 - 20 / tagpro.zoom, y: viewPort.height / 2 - 20 / tagpro.zoom};
+			//canvas coordinates of camera target
+			var canvasSrcCoords = {x: viewPort.width / 2 - 20 / tagpro.zoom, y: viewPort.height / 2 - 20 / tagpro.zoom};
 
-				//vector from camera target to click in in-game pixels
-				var tpDiff = {x: this.x - tpSrcCoords.x, y: this.y - tpSrcCoords.y};
+			//vector from camera target to click in in-game pixels
+			var tpDiff = {x: this.x - tpSrcCoords.x, y: this.y - tpSrcCoords.y};
 
-				//vector from camera target to click in canvas pixels
-				var canvasDiff = {x: tpDiff.x / tagpro.zoom, y: tpDiff.y / tagpro.zoom};
+			//vector from camera target to click in canvas pixels
+			var canvasDiff = {x: tpDiff.x / tagpro.zoom, y: tpDiff.y / tagpro.zoom};
 
-				return {
-					x: canvasSrcCoords.x + canvasDiff.x,
-					y: canvasSrcCoords.y + canvasDiff.y
-				};
-			}
+			return {
+				x: canvasSrcCoords.x + canvasDiff.x,
+				y: canvasSrcCoords.y + canvasDiff.y
+			};
+		}
 
-			this.minus = function(other) {
-				var out = new Point({});
-				out.x = this.x - other.x;
-				out.y = this.y - other.y;
-				return out;
-			}
+		this.minus = function(other) {
+			var out = new Point({});
+			out.x = this.x - other.x;
+			out.y = this.y - other.y;
+			return out;
+		}
 
-			this.distance = function(other) {
-				var diff = this.minus(other);
-				return Math.sqrt(diff.x * diff.x + diff.y * diff.y);
-			}
-		};
+		this.plus = function(other) {
+			var out = new Point(this, true);
+			out.x += other.x;
+			out.y += other.y;
+			return out;
+		}
+
+		this.distance = function(other) {
+			var diff = this.minus(other);
+			return Math.sqrt(diff.x * diff.x + diff.y * diff.y);
+		}
+	};
 
 // ---------- CURVE CLASS ---------- \\
-	 
-		var Curve = function(start) {
-			var points = [new Point(start)];
+ 
+	var Curve = function(start) {
+		var points = [new Point(start)];
 
-			this.addPoint = function(point) { 
-				points.push(new Point(point));
+		this.addPoint = function(point, tpCoords) { 
+			points.push(new Point(point, tpCoords));
+		}
+
+		function drawSmooth(context, points, endPoint) {
+			if (endPoint) { points.push(endPoint); }
+
+			context.beginPath();
+
+			context.strokeStyle = 'rgba(245, 221, 0, 0.6)';
+			context.lineWidth = 5;
+
+			//http://stackoverflow.com/questions/7054272/how-to-draw-smooth-curve-through-n-points-using-javascript-html5-canvas
+			context.moveTo(points[0].x, points[0].y);
+			var i = 1;
+			for(var control = {x: 0, y: 0}; i < points.length - 2; i++) {
+				control.x = (points[i].x + points[i + 1].x) / 2;
+				control.y = (points[i].y + points[i + 1].y) / 2;
+				context.quadraticCurveTo(points[i].x, points[i].y, control.x, control.y);
 			}
+			context.quadraticCurveTo(points[i].x, points[i].y, points[i+1].x, points[i+1].y);
 
-			function drawSmooth(context, points) {
-				context.beginPath();
+			context.stroke();
+		}
 
-				context.strokeStyle = 'rgba(245, 221, 0, 0.6)';
-				context.lineWidth = 5;
+		this.draw = function(context, endPoint) {
+			if(points.length < 3) { return false; }
 
-				//http://stackoverflow.com/questions/7054272/how-to-draw-smooth-curve-through-n-points-using-javascript-html5-canvas
-				context.moveTo(points[0].x, points[0].y);
-				var i = 1;
-				for(var control = {x: 0, y: 0}; i < points.length - 2; i++) {
-					control.x = (points[i].x + points[i + 1].x) / 2;
-					control.y = (points[i].y + points[i + 1].y) / 2;
-					context.quadraticCurveTo(points[i].x, points[i].y, control.x, control.y);
-				}
-				context.quadraticCurveTo(points[i].x, points[i].y, points[i+1].x, points[i+1].y);
-
-				context.stroke();
-			}
-
-			this.draw = function(context) {
-				if(points.length < 3) { return false; }
-
-				context.save();
+			context.save();
+			if (endPoint) {
+				drawSmooth(context, points.map(function(point) { return point.toCanvas(); }), endPoint.toCanvas());
+			} else {
 				drawSmooth(context, points.map(function(point) { return point.toCanvas(); }));
-				context.restore();
 			}
-		};
+			context.restore();
+		}
+
+		this.trim = function() {
+			points.splice(0, 1);
+		}
+	};
+
+// ---------- TRACE CLASS --------- \\
+
+	var Trace = function(playerId) {
+		var current = (new Point(tagpro.players[playerId], true)).plus({x: 20, y: 20});
+		var currentCanvas = current.toCanvas();
+		var boundBox = viewPort.getBoundingClientRect();
+		var fakeClick = {clientX: currentCanvas.x + boundBox.left, clientY: currentCanvas.y + boundBox.top};
+
+		var path = new Curve(fakeClick);
+
+		var active = true;
+		var pointCount = 1;
+
+		var movement = setInterval(function() {
+			path.addPoint(current, true);
+			current = (new Point(tagpro.players[playerId], true)).plus({x: 20, y: 20});
+			if (pointCount < traceLength) {
+				++pointCount;
+			} else {
+				path.trim();
+			}
+		}, 1000/60);
+
+		this.draw = function(context) {
+			if (active) { path.draw(context, current) };
+		}
+
+		this.stop = function() {
+			clearInterval(movement);
+			active = false;
+		}
+	}
 
 // ---------- ARROW CLASS ---------- \\
 
@@ -208,8 +280,8 @@ tagpro.ready(function() {
 		if (kickClick || !tagpro.spectator) { tpkick(event); } 
 	}
 
-	var curves = [], arrows = [], circles = [];
-	var drawCurve = false, drawArrow = false, drawCircle = false, shift = false, alt = false;;
+	var curves = [], arrows = [], circles = [], traces = [];
+	var drawCurve = false, drawArrow = false, drawCircle = false, shift = false, alt = false;
 
 	var tpUiDraw = tagpro.ui.draw;
 	tagpro.ui.draw = function(context) {
@@ -225,6 +297,10 @@ tagpro.ready(function() {
 			element.draw(context);
 		});
 
+		traces.forEach(function(element) {
+			element.draw(context);
+		})
+
 		tpUiDraw(context);
 	};
 
@@ -235,7 +311,12 @@ tagpro.ready(function() {
 
 	$("canvas#viewPort").mousedown(function(click) {
 		if (tagpro.spectator !== "watching") { return false; }
-		if (shift) {
+		if (shift && alt) {
+			var found = findPlayer(click);
+			if (found) {
+				traces.push(new Trace(found));
+			}
+		} else if (shift) {
 			drawArrow = true;
 			arrows.push(new Arrow(click));
 		} else if(alt) {
@@ -270,5 +351,9 @@ tagpro.ready(function() {
 		curves  = [];
 		arrows  = [];
 		circles = [];
+		traces.forEach(function(element) {
+			element.stop();
+		})
+		traces = [];
 	});
 });
