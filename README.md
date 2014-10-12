@@ -9,6 +9,7 @@ Controls:
 * Click-Drag: freehand draw
 * Shift-Click-Drag: draw an arrow
 * Alt-Click-Drag: draw a circle
+* Alt-Shift-Click a player: trace that player's path.  This is still finnicky.
 * Double Click: erase drawings
 
 By default, this userscript disables reporting a player by clicking their ball so that it doesn't get in the way of your drawing.  

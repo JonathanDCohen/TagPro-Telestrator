@@ -3,6 +3,6 @@
 - [x] Shift-click for arrows
 - [x] Circle drawing
 - [ ] Get rid of the extra loop in curve drawing
-- [ ] Follow player paths
+- [x] Follow player paths
 - [ ] Cache shapes while in center view
 - [ ] Potentially also in follow mode? Zoom changes are infrequent
