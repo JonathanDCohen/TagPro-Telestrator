@@ -306,6 +306,7 @@ tagpro.ready(function() {
 		if (tagpro.spectator !== "watching") { return false; }
 		drawing = true;
 		if (shift && alt) {
+			drawing = false;
 			var found = findPlayer(click);
 			if (found) {
 				traces.push(new Trace(found));
