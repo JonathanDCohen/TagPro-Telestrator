@@ -272,11 +272,6 @@ tagpro.ready(function() {
 
 // ---------- HIGH LEVEL LOGIC ----------\\
 
-	tpkick = tagpro.kick.clickBall;
-	tagpro.kick.clickBall = function(event) { 
-		if (kickClick || !tagpro.spectator) { tpkick(event); } 
-	}
-
 	var traces = [], drawings = [];
 	var drawing = false, shift = false, alt = false;
 
@@ -298,23 +293,27 @@ tagpro.ready(function() {
 		alt   = event.altKey; 
 	});
 
+	tpkick = tagpro.kick.player;
+	tagpro.kick.player = function(player) {
+		var shift_alt = (alt && shift);
+
+		if (kickClick || !tagpro.spectator && !shift_alt) { tpkick(player); } 
+		
+		if (!shift_alt) { return false; }
+		traces.push(new Trace(player.id));
+	}
+
 	$("canvas#viewPort").mousedown(function(click) {
 		if (tagpro.spectator !== "watching") { return false; }
 		drawing = true;
 		if (shift && alt) {
+			//handled in the tagpro.kick.player method
 			drawing = false;
-			var found = findPlayer(click);
-			if (found) {
-				traces.push(new Trace(found));
-			}
 		} else if (shift) {
-			// drawArrow = true;
 			drawings.push(new Arrow(click));
 		} else if(alt) {
-			// drawCircle = true;
 			drawings.push(new Circle(click));
 		} else {
-			// drawCurve = true;
 			drawings.push(new Curve(click));
 		}
 	});
