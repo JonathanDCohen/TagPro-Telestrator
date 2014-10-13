@@ -20,8 +20,8 @@ tagpro.ready(function() {
 	function canvasMousePosition(click) {
 		var boundBox = viewPort.getBoundingClientRect();
 		return {
-			x: click.clientX  - 6 - boundBox.left,
-			y: click.clientY - 9 - boundBox.top
+			x: click.pageX - 6 - boundBox.left,
+			y: click.pageY - 9 - boundBox.top
 		};
 	}
 
@@ -119,8 +119,8 @@ tagpro.ready(function() {
 
 // ---------- CURVE CLASS ---------- \\
  
-	var Curve = function(start) {
-		var points = [new Point(start)];
+	var Curve = function(start, tpCoords) {
+		var points = [new Point(start, tpCoords)];
 
 		this.update = function(point, tpCoords) { 
 			points.push(new Point(point, tpCoords));
@@ -168,11 +168,7 @@ tagpro.ready(function() {
 
 	var Trace = function(playerId) {
 		var current = (new Point(tagpro.players[playerId], true)).plus({x: 20, y: 20});
-		var currentCanvas = current.toCanvas();
-		var boundBox = viewPort.getBoundingClientRect();
-		var fakeClick = {clientX: currentCanvas.x + boundBox.left, clientY: currentCanvas.y + boundBox.top};
-
-		var path = new Curve(fakeClick);
+		var path = new Curve(current, true);
 
 		var active = true;
 		var pointCount = 1;
