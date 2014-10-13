@@ -45,23 +45,6 @@ tagpro.ready(function() {
 		};
 	};
 
-	function findPlayer(click) {
-		var coords = canvasToTagpro(click);
-
-		var found = false;
-		for (var idx in tagpro.players) {
-			var player = tagpro.players[idx];
-			if ((coords.x >= player.x) && (coords.x <= player.x + 40 / tagpro.zoom)
-			 && (coords.y >= player.y) && (coords.y <= player.y + 40 / tagpro.zoom)) 
-			{
-				found = idx;
-				console.log("found player " + found);
-				break;
-			}
-		}
-		return found;
-	}
-
 // ---------- POINT CLASS ---------- \\
 
 	//represents a point in the game's coordinates.
