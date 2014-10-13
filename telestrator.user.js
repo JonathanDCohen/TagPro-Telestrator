@@ -18,10 +18,11 @@ tagpro.ready(function() {
 // ---------- HELPER METHODS ---------- \\
 
 	function canvasMousePosition(click) {
-		var boundBox = viewPort.getBoundingClientRect();
+		var vp = $("canvas#viewPort");
+		var width = parseInt($('canvas#viewPort').css('borderWidth'),10);
 		return {
-			x: click.pageX - 6 - boundBox.left,
-			y: click.pageY - 9 - boundBox.top
+			x: click.pageX - width - vp.offset().left,
+			y: click.pageY - width - vp.offset().top
 		};
 	}
 
