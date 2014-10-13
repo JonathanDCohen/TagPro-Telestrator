@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name            TagPro Telestrator
-// @version         1.2.2
+// @version         1.2.3
 // @description     Use a telestrator while spectating TagPro!
 // @include         http://tagpro-*.koalabeast.com:*
 // @include         http://tangent.jukejuice.com:*
-// @include         http://maptest.newcompte.fr:*
+// @include         http://maptest*.newcompte.fr:*
 // @author          BBQchicken
 // ==/UserScript==
 
