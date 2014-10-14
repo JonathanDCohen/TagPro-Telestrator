@@ -19,7 +19,7 @@ tagpro.ready(function() {
 
 	function canvasMousePosition(click) {
 		var vp = $("canvas#viewPort");
-		var width = vp.css('borderWidth'),10);
+		var width = parseInt($('canvas#viewPort').css('borderWidth'),10);
 		return {
 			x: click.pageX - width - vp.offset().left,
 			y: click.pageY - width - vp.offset().top
